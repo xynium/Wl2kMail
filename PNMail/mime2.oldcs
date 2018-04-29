@@ -1,0 +1,145 @@
+﻿using System;
+using System.IO;
+
+namespace PNMail
+{
+	public class mime
+	{
+		String sBufSortie;
+		public int iConstControl;
+		String sWkRep = "/PNMail/";
+		const int ciMIDMAXLEN = 12;
+		const int ciCALLLEN = 6;
+		// Call 6 signes sinon tronque
+		DateTime now = DateTime.Now;
+		string[] MonthName = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+
+		//ecrit le fichier du mail
+		public mime (String sAdress, String sSujet, String sMsg, String sMyAdress)
+		{
+			String sMid;
+			String sFileName;
+
+			sBufSortie = "";
+			sBufSortie += "Date: ";
+			sBufSortie +=  now.DayOfWeek.ToString().Substring (0, 3);
+			sBufSortie += String.Format(", {0:D2} ", now.Day);
+			sBufSortie +=  MonthName[now.Month-1];
+			sBufSortie += String.Format(" {0:D4} {1:D2}:{2:D2}:{3:D2} -0000",  now.Year, now.Hour, now.Minute,now.Second);
+
+			sBufSortie += "\r\n";
+
+			sBufSortie += "From: ";
+			if (sMyAdress.IndexOf ("@") > 0) {
+				//sBufSortie += "SMTP:";
+				sBufSortie += sMyAdress;
+			} else {
+				sBufSortie += sMyAdress;
+				sBufSortie += "@winlink.org";
+			}
+			sBufSortie += "\r\n";
+
+			sBufSortie += "Reply-To: ";
+			if (sMyAdress.IndexOf ("@") > 0) {
+			//	sBufSortie += "SMTP:";
+				sBufSortie += sMyAdress;
+			} else {
+				sBufSortie += sMyAdress;
+				sBufSortie += "@winlink.org";
+			}
+			sBufSortie += "\r\n";
+
+			sBufSortie += "Subject: ";
+			sBufSortie += sSujet;
+			sBufSortie += "\r\n";
+
+			sBufSortie += "To: ";  // gerer si plusieur adresse 
+			if (sMyAdress.IndexOf ("@") > 0) {
+			//	sBufSortie += "SMTP:";
+				sBufSortie += sMyAdress;
+			} else {
+				sBufSortie += sMyAdress;
+				sBufSortie += "@winlink.org";
+			}
+			sBufSortie += "\r\n";
+
+			sBufSortie += "Message-ID: ";
+			sMid = generate_mid (sMyAdress);
+			sBufSortie += sMid;
+			sBufSortie += "\r\n";
+
+			sBufSortie += "X-Cancel: 2019/05/16 15:06";
+			sBufSortie += "\r\n";
+
+			sBufSortie += "X-Source: FM4PN";
+			sBufSortie += "\r\n";
+
+			sBufSortie += "MIME-Version: 1.0"; 			
+			sBufSortie += "\r\n";
+
+			sBufSortie += "Content-Type: text/plain; charset = \"iso-8859-1\"";
+			sBufSortie += "\r\n";
+
+			sBufSortie += "Content-Transfer-Encoding: 7bit";
+			sBufSortie += "\r\n";
+
+			/*
+			if ((sAdress == "QTH") || (sAdress == "INQUIRY"))
+				sBufSortie += "Type: Radio; Outmail\r\n";
+			else
+				sBufSortie += "Type: Email; OutMail\r\n";       //"Type: Private\r\n";
+
+
+
+		
+			//  sBufSortie+= "Cc: ";  a gerer le CC
+			//  sBufSortie+= "Bcc: ";  a gerer le Bcc
+
+
+
+
+			sBufSortie += "Mbo: ";
+			if (sMyAdress.IndexOf ("@") > 0)
+				sBufSortie += "SMTP:";
+			sBufSortie += sMyAdress;
+			sBufSortie += "\r\n";
+
+			sBufSortie += "Body: ";
+			sBufSortie += String.Format ("{0:D}", sMsg.Length);  //test sMsg.Length+2 effacé le +2 le 18/07 a tester
+			sBufSortie += "\r\n";  
+
+			*/
+
+			sBufSortie += "\r\n";
+			sBufSortie += sMsg;
+		//	sBufSortie += "\r\n";  // crlf pas compte dans le body
+			//sBufSortie += "\r\n"; 
+						
+			sFileName = Environment.GetEnvironmentVariable ("HOME") + sWkRep + "OutBox/" + sMid + ".msg";
+
+			StreamWriter writer = new StreamWriter (sFileName);
+			writer.Write (sBufSortie);
+			writer.Close ();
+		}
+
+		String generate_mid (String sIn)
+		{
+			String sMid;
+			String sRand;
+			int itmp;
+			//DateTime now = DateTime.Now;
+
+			itmp = sIn.IndexOf ("@");
+			if (itmp > ciCALLLEN)
+				itmp = ciCALLLEN;
+			sMid = sIn.Substring (0, itmp); 
+
+			sRand = String.Format ("{0:D}", (now.Second + ((now.Minute + (now.Hour + (now.Day + now.Month * 31 + (now.Year - 2015) * 370) * 24) * 60) * 60))); 
+
+			sMid = sRand.Substring (sRand.Length + itmp - 11, 11 - itmp) +  sMid;
+
+			return sMid;   
+		}
+	}
+}
+
